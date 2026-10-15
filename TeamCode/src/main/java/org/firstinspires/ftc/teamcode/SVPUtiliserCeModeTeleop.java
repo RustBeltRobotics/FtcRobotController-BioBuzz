@@ -34,6 +34,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
@@ -113,6 +114,8 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
     boolean lastGamepadX = false;
 
     Toggler aToggler = new Toggler();
+    Toggler bToggler = new Toggler();
+
 
     DriveController driveController;
 
@@ -161,13 +164,17 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
         feeder = hardwareMap.get(DcMotor.class, "feeder");
 
         webTelemetryStreamer = new WebTelemetryStreamer(8886);
-        webTelemetryStreamer.setChannels(new ArrayList<String>(Arrays.asList("main_current", "main_speed", "voltage", "backspin_current", "backspin_speed", "rpm_i", "ratio_i", "rpm_back_i")));
+        webTelemetryStreamer.setChannels(new ArrayList<String>(Arrays.asList("shooterR_speed", "shooterR_current", "shooterL_speed", "shooterL_current", "intake_speed", "intake_current", "feeder_speed", "feeder_current", "SPshooter_speed", "SPfeeder_speed", "SPintake_speed")));
         Thread webTelemetryStreamerThread = new Thread(webTelemetryStreamer);
         webTelemetryStreamerThread.start(); // start server
 
         webInterface = new WebInterface(8885);
-        webInterface.addParameter("shooter_power", 0.6);
-        webInterface.addParameter("feeder_power", 0.6); //0.4
+        // webInterface.addParameter("shooter_power", 0.6);
+        // webInterface.addParameter("feeder_power", 0.6); //0.4
+
+        webInterface.addParameter("shooter_speed", 2000, 5000);
+        webInterface.addParameter("feeder_speed", 100, 3000);
+        webInterface.addParameter("intake_speed", 1000, 5000);
 
         webInterface.addParameter("Kp_drive", 0.01);
         webInterface.addParameter("Ki_drive", 0.00);
@@ -230,9 +237,7 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
 
         shooterR.setDirection(DcMotor.Direction.FORWARD);
         shooterR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-
-        shooterL.setDirection(DcMotor.Direction.FORWARD);
+        shooterL.setDirection(DcMotor.Direction.REVERSE);
         shooterL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // We set the left motors in reverse which is needed for drive trains where the left
@@ -393,9 +398,25 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
 
             double horrible_coefficient = 20;
 
-            webTelemetryStreamer.sendData("main_current", ((DcMotorEx) shooterL).getCurrent(CurrentUnit.MILLIAMPS) / 1000);
-            webTelemetryStreamer.sendData("main_speed", horrible_coefficient * ((DcMotorEx) shooterL).getVelocity(AngleUnit.DEGREES) / 6.0);
-//            webTelemetryStreamer.sendData("voltage", voltageSensor.getVoltage());
+            webTelemetryStreamer.sendData("shooterL_current", ((DcMotorEx) shooterL).getCurrent(CurrentUnit.MILLIAMPS) / 1000);
+            webTelemetryStreamer.sendData("shooterL_speed", horrible_coefficient * ((DcMotorEx) shooterL).getVelocity(AngleUnit.DEGREES) / 6.0);
+
+            webTelemetryStreamer.sendData("shooterR_current", ((DcMotorEx) shooterR).getCurrent(CurrentUnit.MILLIAMPS) / 1000);
+            webTelemetryStreamer.sendData("shooterR_speed", horrible_coefficient * ((DcMotorEx) shooterR).getVelocity(AngleUnit.DEGREES) / 6.0);
+
+            webTelemetryStreamer.sendData("feeder_current", ((DcMotorEx) feeder).getCurrent(CurrentUnit.MILLIAMPS) / 1000);
+            webTelemetryStreamer.sendData("feeder_speed", horrible_coefficient * ((DcMotorEx) feeder).getVelocity(AngleUnit.DEGREES) / 6.0);
+
+            webTelemetryStreamer.sendData("intake_current", ((DcMotorEx) intake).getCurrent(CurrentUnit.MILLIAMPS) / 1000);
+            webTelemetryStreamer.sendData("intake_speed", horrible_coefficient * ((DcMotorEx) intake).getVelocity(AngleUnit.DEGREES) / 6.0);
+
+            webTelemetryStreamer.sendData("SPintake_speed", webInterface.getParameter("intake_speed"));
+            webTelemetryStreamer.sendData("SPshooter_speed", webInterface.getParameter("shooter_speed"));
+            webTelemetryStreamer.sendData("SPfeeder_Speed", webInterface.getParameter("feeder_speed"));
+
+
+
+            //            webTelemetryStreamer.sendData("voltage", voltageSensor.getVoltage());
 
 //            webTelemetryStreamer.sendData("backspin_current", shooterR.getCurrent(CurrentUnit.MILLIAMPS) / 1000);
 //            webTelemetryStreamer.sendData("backspin_speed", horrible_coefficient * intake.getVelocity(AngleUnit.DEGREES) / 6.0);
@@ -515,33 +536,29 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
 
 
         aToggler.update(gamepad1.a);
+        bToggler.update(gamepad1.b);
 
 
-        double shooterPowerCoef = webInterface.getParameter("shooter_power"); // 0.80;
-        double upperWheelPower = webInterface.getParameter("feeder_power");  // 0.3
+
+        // double shooterPowerCoef = webInterface.getParameter("shooter_power"); // 0.80;
+        // double upperWheelPower = webInterface.getParameter("feeder_power");  // 0.3
         double restPowerLevel = 1.9; // 1.9
 
 
-        shooterL.setPower(shooterToggle ? -shooterPowerCoef : (-invert_all_emergency * (((gamepad1.left_trigger * shooterPowerCoef - gamepad1.right_trigger * shooterPowerCoef) + (gamepad2.left_trigger * shooterPowerCoef - gamepad2.right_trigger * shooterPowerCoef))/2.0)));
-
-        intake.setPower(avg(gamepad2.left_stick_y * restPowerLevel,   invert_all_emergency *   boolToDoubleBecauseItWontCast(aToggler.currentState || gamepad1.b || gamepad1.y) * restPowerLevel));
-        feeder.setPower(avg(gamepad2.right_stick_y * restPowerLevel,  invert_all_emergency *  boolToDoubleBecauseItWontCast(gamepad1.b || gamepad1.y) * restPowerLevel));
-        shooterR.setPower(avg(gamepad2.right_stick_x * upperWheelPower, invert_all_emergency * -boolToDoubleBecauseItWontCast(gamepad1.y) * upperWheelPower));
+        double shooter_speed = webInterface.getParameter("shooter_speed");
 
 
-        if (gamepad2.aWasPressed()) {
-            webInterface.setParameter("shooter_power", 0.55);
-        }
-
-        if (gamepad2.bWasPressed()) {
-            webInterface.setParameter("shooter_power", webInterface.getParameter("shooter_power") + 0.05);
-        }
-
-        if (gamepad2.xWasPressed()) {
-            webInterface.setParameter("shooter_power", webInterface.getParameter("shooter_power") - 0.05);
-        }
+        int hardcoded_ticks_per_revolution = 28;
 
 
+        ((DcMotorEx) intake).setVelocity(boolToDoubleBecauseItWontCast(bToggler.currentState) * webInterface.getParameter("intake_speed"));
+        ((DcMotorEx) feeder).setVelocity(boolToDoubleBecauseItWontCast(gamepad1.x) * webInterface.getParameter("feeder_speed"));
+
+        double shooterSpeed = -boolToDoubleBecauseItWontCast(aToggler.currentState) * shooter_speed * hardcoded_ticks_per_revolution / 60.0;
+        ((DcMotorEx) shooterR).setVelocity(shooterSpeed);
+        ((DcMotorEx) shooterL).setVelocity(shooterSpeed);
+
+        
         otosXController.setCoefs(
                 webInterface.getParameter("Kp_otos"),
                 webInterface.getParameter("Ki_otos"),
@@ -586,7 +603,7 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
 //        }
 
 
-        telemetry.addData("shooter_power", webInterface.getParameter("shooter_power"));
+        // telemetry.addData("shooter_power", webInterface.getParameter("shooter_power"));
 
 //        gamepad2.resetEdgeDetection();
         gamepad1.resetEdgeDetection(); // used to toggle otos test thing

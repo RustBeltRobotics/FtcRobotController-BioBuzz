@@ -163,7 +163,12 @@ public class WebTelemetryStreamer implements Runnable {
     }
 
     public void setValue(String key, double value) {
-        channelValueMap.put(Objects.requireNonNull(channelMap.get(key)), value);
+        try {
+            channelValueMap.put(Objects.requireNonNull(channelMap.get(key)), value);
+        } catch (NullPointerException n) {
+            System.out.println("[wts]: tried to use nonexistent key '" + key + "'");
+            n.printStackTrace();
+        }
     }
 
     // DOES NOT ACTUALLY SEND, you must call sendFrame(
