@@ -172,9 +172,9 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
         // webInterface.addParameter("shooter_power", 0.6);
         // webInterface.addParameter("feeder_power", 0.6); //0.4
 
-        webInterface.addParameter("shooter_speed", 2000, 5000);
-        webInterface.addParameter("feeder_speed", 100, 3000);
-        webInterface.addParameter("intake_speed", 1000, 5000);
+        webInterface.addParameter("shooter_speed", 2500, 5000);
+        webInterface.addParameter("feeder_speed", 2500, 4000);
+        webInterface.addParameter("intake_speed", 2500, 5000);
 
         webInterface.addParameter("Kp_drive", 0.01);
         webInterface.addParameter("Ki_drive", 0.00);
@@ -232,7 +232,7 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
         intake.setDirection(DcMotor.Direction.FORWARD);
         intake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        feeder.setDirection(DcMotor.Direction.FORWARD);
+        feeder.setDirection(DcMotor.Direction.REVERSE);
         feeder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         shooterR.setDirection(DcMotor.Direction.FORWARD);
@@ -342,6 +342,15 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
                 )
         );
 
+        ((DcMotorEx) shooterR).setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER,
+                new PIDFCoefficients(
+                        webInterface.getParameter("Kp_shooter"),
+                        webInterface.getParameter("Ki_shooter"),
+                        webInterface.getParameter("Kd_shooter"),
+                        webInterface.getParameter("Kf_shooter")
+                )
+        );
+
 //        System.out.print("hashfuaehwoigfheraoiwghioe: ");
 //        System.out.println(webInterface.getParameter("Kp_drive"));
 //        System.out.println(driveController.drivingPID.Kp);
@@ -388,7 +397,7 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
 //        }
 
         // send slower to stop network getting backed up (maybe it would help if I don't flush data inside of sendData - oh wait I'm already doing that)
-        if (loopcounter % 3 == 0) {
+        if (true) { //(loopcounter % 3 == 0) {
 //            if (currentDetections.size() > 0) {
 //                AprilTagDetection detection = currentDetections.get(0);
 //                webTelemetryStreamer.sendData("xa", detection.ftcPose.x);
@@ -462,10 +471,10 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
 //            webTelemetryStreamer.sendData("sf_h", otosPos.h);
 
             // get voltage sensor (there are two one is on the expansion hub and this is not ideal as it does not specify which one to use)
-            for (VoltageSensor sensor : hardwareMap.voltageSensor) {
-//                webTelemetryStreamer.sendData("battery_voltage", sensor.getVoltage() * 100); // multiply by 100 so it is in a similar range to other values
-                break;
-            }
+//            for (VoltageSensor sensor : hardwareMap.voltageSensor) {
+////                webTelemetryStreamer.sendData("battery_voltage", sensor.getVoltage() * 100); // multiply by 100 so it is in a similar range to other values
+//                break;
+//            }
         }
 
         // TODO: make opmode just to test every motors' current draw individually under no load
@@ -536,7 +545,7 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
 
 
         aToggler.update(gamepad1.a);
-        bToggler.update(gamepad1.b);
+//        bToggler.update(gamepad1.left_bumper);
 
 
 
@@ -550,11 +559,12 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
 
         int hardcoded_ticks_per_revolution = 28;
 
+        double reversalSignal = 1 - (2 * boolToDoubleBecauseItWontCast(gamepad1.b));
 
-        ((DcMotorEx) intake).setVelocity(boolToDoubleBecauseItWontCast(bToggler.currentState) * webInterface.getParameter("intake_speed"));
-        ((DcMotorEx) feeder).setVelocity(boolToDoubleBecauseItWontCast(gamepad1.x) * webInterface.getParameter("feeder_speed"));
+        ((DcMotorEx) intake).setVelocity(reversalSignal * boolToDoubleBecauseItWontCast(gamepad1.left_bumper) * webInterface.getParameter("intake_speed"));
+        ((DcMotorEx) feeder).setVelocity(reversalSignal * boolToDoubleBecauseItWontCast(gamepad1.right_bumper) * webInterface.getParameter("feeder_speed"));
 
-        double shooterSpeed = -boolToDoubleBecauseItWontCast(aToggler.currentState) * shooter_speed * hardcoded_ticks_per_revolution / 60.0;
+        double shooterSpeed = boolToDoubleBecauseItWontCast(aToggler.currentState) * shooter_speed * hardcoded_ticks_per_revolution / 60.0;
         ((DcMotorEx) shooterR).setVelocity(shooterSpeed);
         ((DcMotorEx) shooterL).setVelocity(shooterSpeed);
 
