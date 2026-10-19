@@ -240,6 +240,7 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
         shooterL.setDirection(DcMotor.Direction.REVERSE);
         shooterL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
+        /*
         // We set the left motors in reverse which is needed for drive trains where the left
         // motors are opposite to the right ones.
         backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
@@ -256,6 +257,7 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
         frontRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        */
 
 
 
@@ -287,9 +289,7 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
             loop2(loopcounter++);
         }
 
-//        try {
-            webInterface.stop();
-//        } catch (IOException e) {}
+        webInterface.stop();
 
         try {
             webTelemetryStreamer.stop();
@@ -421,7 +421,7 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
 
             webTelemetryStreamer.sendData("SPintake_speed", webInterface.getParameter("intake_speed"));
             webTelemetryStreamer.sendData("SPshooter_speed", webInterface.getParameter("shooter_speed"));
-            webTelemetryStreamer.sendData("SPfeeder_Speed", webInterface.getParameter("feeder_speed"));
+            webTelemetryStreamer.sendData("SPfeeder_speed", webInterface.getParameter("feeder_speed"));
 
 
 
@@ -486,14 +486,11 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
 //        if (gamepad1.a) {
 //            imu.resetYaw();
 //        }
-        // If you press the left bumper, you get a drive from the point of view of the robot
-        // (much like driving an RC vehicle)
 
-//        drive(-gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
 
-        // 90° rotation
-//        drive(-gamepad1.left_stick_x, -gamepad1.left_stick_y, gamepad1.right_stick_x);
+        driveController.driveFieldRelative(jsrc(gamepad1.left_stick_y), -jsrc(gamepad1.left_stick_x), -jsrc(gamepad1.right_stick_x));
 
+        /*
         if (!doingOtosTest) {
             if (!gamepad1.right_bumper && false) {
                 // working:
@@ -522,16 +519,7 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
                     driveController.driveFieldRelative(jsrc(gamepad1.left_stick_y), jsrc(gamepad1.left_stick_x), jsrc(gamepad1.right_stick_x));
 //                }
             }
-        }
-
-
-
-
-//        if (gamepad1.left_bumper) {
-//            drive(-gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
-//        } else {
-//            driveFieldRelative(-gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
-//        }
+        }*/
 
         if (gamepad1.x && !lastGamepadX) {
             shooterToggle = !shooterToggle;
@@ -650,64 +638,15 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
         return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
     }
 
-
     private double jsrc(double power) {
 //        double a = 3.7;
 //        double b = 0.43;
-        double a = 3.33;
-        double b = 0.35;
+//        double a = 3.33;
+//        double b = 0.35;
+
+        double a = 5.1;
+        double b = 0.25;
 
         return (Math.signum(power)*Math.pow(Math.abs(power), a) + (power * b)) / (1 + b);
-    }
-
-    // This routine drives the robot field relative
-    private void driveFieldRelative(double forward, double right, double rotate) {
-        // First, convert direction being asked to drive to polar coordinates
-        double theta = Math.atan2(forward, right);
-        double r = Math.hypot(right, forward);
-
-        // Second, rotate angle by the angle the robot is pointing
-        // reverse angle because the robot magically got mixed up and the angle was inverted
-
-        double yaw_corrected = ((((0.0 - angles.firstAngle) - this.yawZero) + 180.0)) % 360.0 - 180.0;
-
-        theta = AngleUnit.normalizeRadians(theta + (yaw_corrected) * (3.141592653589/180));//AngleUnit.normalizeRadians(theta -
-                //imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
-
-        // Third, convert back to cartesian
-        double newForward = r * Math.sin(theta);
-        double newRight = r * Math.cos(theta);
-
-        // Finally, call the drive method with robot relative forward and right amounts
-        drive(newForward, newRight, rotate);
-    }
-
-    // Thanks to FTC16072 for sharing this code!!
-    public void drive(double forward, double right, double rotate) {
-        // This calculates the power needed for each wheel based on the amount of forward,
-        // strafe right, and rotate
-        double frontLeftPower = forward + right + rotate;
-        double frontRightPower = forward - right - rotate;
-        double backRightPower = forward + right - rotate;
-        double backLeftPower = forward - right + rotate;
-
-        double maxPower = 1.0;
-        double maxSpeed = 1.0;  // make this slower for outreaches
-
-        // This is needed to make sure we don't pass > 1.0 to any wheel
-        // It allows us to keep all of the motors in proportion to what they should
-        // be and not get clipped
-        maxPower = Math.max(maxPower, Math.abs(frontLeftPower));
-        maxPower = Math.max(maxPower, Math.abs(frontRightPower));
-        maxPower = Math.max(maxPower, Math.abs(backRightPower));
-        maxPower = Math.max(maxPower, Math.abs(backLeftPower));
-
-        // We multiply by maxSpeed so that it can be set lower for outreaches
-        // When a young child is driving the robot, we may not want to allow full
-        // speed.
-        frontLeftDrive.setPower(maxSpeed * (frontLeftPower / maxPower));
-        frontRightDrive.setPower(maxSpeed * (frontRightPower / maxPower));
-        backLeftDrive.setPower(maxSpeed * (backLeftPower / maxPower));
-        backRightDrive.setPower(maxSpeed * (backRightPower / maxPower));
     }
 }
