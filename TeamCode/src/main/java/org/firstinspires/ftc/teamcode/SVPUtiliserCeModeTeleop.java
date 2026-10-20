@@ -317,8 +317,13 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
         telemetry.addLine("The left joystick sets the robot direction");
         telemetry.addLine("Moving the right joystick left and right turns the robot");
 
-        boolean doingOtosTest = gamepad1.back;
+//        boolean doingOtosTest = gamepad1.back;
 
+
+        // dpad down to reset otos
+        if (gamepad1.dpad_down) {
+            myOtos.resetTracking();
+        }
 
         otos0Pos = myOtos.getPosition();
 
@@ -502,8 +507,26 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
 //        }
 
 
-        driveController.driveFieldRelative(jsrc(gamepad1.left_stick_y), -jsrc(gamepad1.left_stick_x), -jsrc(gamepad1.right_stick_x));
+        if (gamepad1.x) {
+            telemetry.addLine("otosTest");
 
+            // todo: use settable target
+            otosXController.setTarget(0);
+            otosYController.setTarget(0);
+            otosRotationController.setTarget(0);
+
+            double xSignal = otosXController.loop(otos0Pos.x);
+            double ySignal = otosYController.loop(otos0Pos.y);
+            double rotationSignal = -otosRotationController.loop(otos0Pos.h);
+
+            webTelemetryStreamer.sendData("xSignal", xSignal);
+            webTelemetryStreamer.sendData("ySignal", ySignal);
+            webTelemetryStreamer.sendData("rotationSignal", rotationSignal);
+
+            driveController.driveFieldRelative(xSignal, ySignal, rotationSignal);
+        } else {
+            driveController.driveFieldRelative(jsrc(gamepad1.left_stick_y), -jsrc(gamepad1.left_stick_x), -jsrc(gamepad1.right_stick_x));
+        }
         /*
         if (!doingOtosTest) {
             if (!gamepad1.right_bumper && false) {
@@ -535,15 +558,15 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
             }
         }*/
 
-        if (gamepad1.x && !lastGamepadX) {
-            shooterToggle = !shooterToggle;
-        }
+//        if (gamepad1.x && !lastGamepadX) {
+//            shooterToggle = !shooterToggle;
+//        }
 
         if (gamepad1.dpad_up) {
             driveController.yawZero = 0.0 - otos0Pos.h;
         }
 
-        lastGamepadX = gamepad1.x;
+//        lastGamepadX = gamepad1.x;
 
 
         aToggler.update(gamepad1.a);
