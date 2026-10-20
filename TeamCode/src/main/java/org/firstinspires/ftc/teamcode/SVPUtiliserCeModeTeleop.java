@@ -133,6 +133,9 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
     PIDController otosRotationController;
     PIDController apriltagRotationController;
 
+    MotorSpeedTracker shooterL_spt;
+    MotorSpeedTracker shooterR_spt;
+
     private static final boolean USE_WEBCAM = true;
     private AprilTagProcessor aprilTag;
     private VisionPortal visionPortal;
@@ -165,8 +168,11 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
         intake = hardwareMap.get(DcMotor.class, "intake");
         feeder = hardwareMap.get(DcMotor.class, "feeder");
 
+        shooterL_spt = new MotorSpeedTracker(shooterL, 28);
+        shooterR_spt = new MotorSpeedTracker(shooterR, 28);
+
         webTelemetryStreamer = new WebTelemetryStreamer(8886);
-        webTelemetryStreamer.setChannels(new ArrayList<String>(Arrays.asList("shooterR_speed", "shooterR_current", "shooterL_speed", "shooterL_current", "intake_speed", "intake_current", "feeder_speed", "feeder_current", "SPshooter_speed", "SPfeeder_speed", "SPintake_speed", "battery_voltage", "otos0_x", "otos0_y", "otos0_h")));
+        webTelemetryStreamer.setChannels(new ArrayList<String>(Arrays.asList("shooterR_speed", "shooterR_current", "shooterL_speed", "shooterL_current", "intake_speed", "intake_current", "feeder_speed", "feeder_current", "SPshooter_speed", "SPfeeder_speed", "SPintake_speed", "battery_voltage", "otos0_x", "otos0_y", "otos0_h", "shooterL_speed_eec", "shooterR_speed_eec")));
         Thread webTelemetryStreamerThread = new Thread(webTelemetryStreamer);
         webTelemetryStreamerThread.start(); // start server
 
@@ -174,7 +180,7 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
         // webInterface.addParameter("shooter_power", 0.6);
         // webInterface.addParameter("feeder_power", 0.6); //0.4
 
-        webInterface.addParameter("shooter_speed", 2500, 5000);
+        webInterface.addParameter("shooter_speed", 1574, 5000);
         webInterface.addParameter("feeder_speed", 2500, 4000);
         webInterface.addParameter("intake_speed", 2500, 5000);
 
@@ -327,6 +333,10 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
 
         otos0Pos = myOtos.getPosition();
 
+        shooterL_spt.update();
+        shooterR_spt.update();
+
+
         driveController.setMeasuredYaw(0.0 - otos0Pos.h);
 
 
@@ -441,6 +451,11 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
             webTelemetryStreamer.sendData("SPintake_speed", webInterface.getParameter("intake_speed"));
             webTelemetryStreamer.sendData("SPshooter_speed", webInterface.getParameter("shooter_speed"));
             webTelemetryStreamer.sendData("SPfeeder_speed", webInterface.getParameter("feeder_speed"));
+
+            // from elapsed encoder count (motorspeedtracker)
+            webTelemetryStreamer.sendData("shooterL_speed_eec", shooterL_spt.rpm());
+            webTelemetryStreamer.sendData("shooterR_speed_eec", shooterR_spt.rpm());
+
 
 
 
