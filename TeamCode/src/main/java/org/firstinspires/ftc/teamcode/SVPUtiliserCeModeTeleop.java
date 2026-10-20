@@ -180,7 +180,7 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
         // webInterface.addParameter("shooter_power", 0.6);
         // webInterface.addParameter("feeder_power", 0.6); //0.4
 
-        webInterface.addParameter("shooter_speed", 1574, 5000);
+        webInterface.addParameter("shooter_speed", 1600, 5000);
         webInterface.addParameter("feeder_speed", 2500, 4000);
         webInterface.addParameter("intake_speed", 2500, 5000);
 
