@@ -103,8 +103,9 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
 
     IMU imu;
 
-    Orientation angles;
+//    Orientation angles;
 
+    SparkFunOTOS.Pose2D otos0Pos;
 
     WebTelemetryStreamer webTelemetryStreamer;
 
@@ -147,11 +148,12 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
         imu = hardwareMap.get(IMU.class, "imu"); // internal IMU
         imu.initialize(parameters);
 
-//        myOtos = hardwareMap.get(SparkFunOTOS.class, "sensor_otos");
-//        myOtos.resetTracking();
-
-
         System.out.println("MAIN ACTUAL OPCODE YAY A");
+
+        myOtos = hardwareMap.get(SparkFunOTOS.class, "otos0");
+        System.out.println("calibrating otos IMU");
+        myOtos.calibrateImu();
+        myOtos.resetTracking();
 
         frontLeftDrive = hardwareMap.get(DcMotor.class, "front_left_drive");
         frontRightDrive = hardwareMap.get(DcMotor.class, "front_right_drive");
@@ -164,7 +166,7 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
         feeder = hardwareMap.get(DcMotor.class, "feeder");
 
         webTelemetryStreamer = new WebTelemetryStreamer(8886);
-        webTelemetryStreamer.setChannels(new ArrayList<String>(Arrays.asList("shooterR_speed", "shooterR_current", "shooterL_speed", "shooterL_current", "intake_speed", "intake_current", "feeder_speed", "feeder_current", "SPshooter_speed", "SPfeeder_speed", "SPintake_speed")));
+        webTelemetryStreamer.setChannels(new ArrayList<String>(Arrays.asList("shooterR_speed", "shooterR_current", "shooterL_speed", "shooterL_current", "intake_speed", "intake_current", "feeder_speed", "feeder_current", "SPshooter_speed", "SPfeeder_speed", "SPintake_speed", "battery_voltage")));
         Thread webTelemetryStreamerThread = new Thread(webTelemetryStreamer);
         webTelemetryStreamerThread.start(); // start server
 
@@ -278,8 +280,13 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
         driveController = new DriveController(imu, frontRightDrive, frontLeftDrive, backLeftDrive, backRightDrive, new PIDController(0.02, 0.001, 0.001));//new PIDController(0.0, 0.0, 0.0));
         driveController.init();
 
-        angles = imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        driveController.yawZero = 0.0 - angles.firstAngle;
+//        angles = imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+
+
+          otos0Pos = myOtos.getPosition();
+
+          // imu is reset so this is 0
+//        driveController.yawZero = 0.0 - angles.firstAngle;
 //        yawZero = 0.0 - angles.firstAngle;
 
 //        initAprilTag();
@@ -311,6 +318,11 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
         telemetry.addLine("Moving the right joystick left and right turns the robot");
 
         boolean doingOtosTest = gamepad1.back;
+
+
+        otos0Pos = myOtos.getPosition();
+
+        driveController.setMeasuredYaw(0.0 - otos0Pos.h);
 
 
 //        doingOtosTest = doingOtosTest ^ gamepad1.backWasPressed();
@@ -358,14 +370,16 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
 //        System.out.println(driveController.drivingPID.Kd);
 
 
-        angles = imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+//        angles = imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
 
         telemetry.addData("connection", imu.getConnectionInfo());
 
         // wrong labels
-        telemetry.addData("heading", formatAngle(angles.angleUnit, angles.firstAngle));
-        telemetry.addData("roll", formatAngle(angles.angleUnit, angles.secondAngle));
-        telemetry.addData("pitch", formatAngle(angles.angleUnit, angles.thirdAngle));
+//        telemetry.addData("heading", formatAngle(angles.angleUnit, angles.firstAngle));
+//        telemetry.addData("roll", formatAngle(angles.angleUnit, angles.secondAngle));
+//        telemetry.addData("pitch", formatAngle(angles.angleUnit, angles.thirdAngle));
+
+
 
 //        SparkFunOTOS.Pose2D otosPos = myOtos.getPosition();
 
@@ -471,10 +485,10 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
 //            webTelemetryStreamer.sendData("sf_h", otosPos.h);
 
             // get voltage sensor (there are two one is on the expansion hub and this is not ideal as it does not specify which one to use)
-//            for (VoltageSensor sensor : hardwareMap.voltageSensor) {
-////                webTelemetryStreamer.sendData("battery_voltage", sensor.getVoltage() * 100); // multiply by 100 so it is in a similar range to other values
-//                break;
-//            }
+            for (VoltageSensor sensor : hardwareMap.voltageSensor) {
+                webTelemetryStreamer.sendData("battery_voltage", sensor.getVoltage());
+                break;
+            }
         }
 
         // TODO: make opmode just to test every motors' current draw individually under no load
@@ -483,7 +497,7 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
 
         // If you press the A button, then you reset the Yaw to be zero from the way
         // the robot is currently pointing
-//        if (gamepad1.a) {
+//        if (gamepad1.y) {
 //            imu.resetYaw();
 //        }
 
@@ -526,7 +540,7 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
         }
 
         if (gamepad1.dpad_up) {
-            driveController.yawZero = 0.0 - angles.firstAngle;
+            driveController.yawZero = 0.0 - otos0Pos.h;
         }
 
         lastGamepadX = gamepad1.x;

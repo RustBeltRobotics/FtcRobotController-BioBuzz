@@ -26,6 +26,8 @@ public class DriveController {
 
     Orientation angles;
 
+    double measuredYaw;
+
     double yawZero;
 
     DriveController(IMU imu, DcMotor frontRightDrive, DcMotor frontLeftDrive, DcMotor backLeftDrive, DcMotor backRightDrive, PIDController pid) {
@@ -35,6 +37,7 @@ public class DriveController {
         this.frontLeftDrive = frontLeftDrive;
         this.backLeftDrive = backLeftDrive;
         this.backRightDrive = backRightDrive;
+        this.measuredYaw = 0.0;
     }
 
     void init() {
@@ -90,15 +93,19 @@ public class DriveController {
         backRightDrive.setPower(0);
     }
 
+    public void setMeasuredYaw(double yaw) {
+        this.measuredYaw = 0.0 - yaw;
+    }
+
     public void driveFieldRelativeAuto(double forward, double right, double rotate) {
         // First, convert direction being asked to drive to polar coordinates
         double theta = Math.atan2(forward, right);
         double r = Math.hypot(right, forward);
 
         // TODO: Continuousalize this, or use quaternion maybe, because I think wrapping around is causing the issue that only appears half the time
-        angles = this.imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+//        angles = this.imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
 
-        double yaw_corrected = ((((0.0 - angles.firstAngle) - this.yawZero) + 180.0)) % 360.0 - 180.0;
+        double yaw_corrected = ((((this.measuredYaw) - this.yawZero) + 180.0)) % 360.0 - 180.0;
 
         double currentError = AngleUnit.normalizeRadians(rotate - yaw_corrected * (Math.PI/180));
         drivingPID.setTarget(0);
