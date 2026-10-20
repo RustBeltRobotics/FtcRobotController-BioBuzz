@@ -532,13 +532,13 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
 
             double xSignal = otosXController.loop(otos0Pos.x);
             double ySignal = otosYController.loop(otos0Pos.y);
-            double rotationSignal = -otosRotationController.loop(otos0Pos.h);
+            double rotationSignal = otosRotationController.loop(otos0Pos.h);
 
             webTelemetryStreamer.sendData("xSignal", xSignal);
             webTelemetryStreamer.sendData("ySignal", ySignal);
             webTelemetryStreamer.sendData("rotationSignal", rotationSignal);
 
-            driveController.driveFieldRelative(xSignal, ySignal, rotationSignal);
+            driveController.driveFieldRelative(ySignal, xSignal, rotationSignal);
         } else {
             driveController.driveFieldRelative(jsrc(gamepad1.left_stick_y), -jsrc(gamepad1.left_stick_x), -jsrc(gamepad1.right_stick_x));
         }
