@@ -166,7 +166,7 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
         feeder = hardwareMap.get(DcMotor.class, "feeder");
 
         webTelemetryStreamer = new WebTelemetryStreamer(8886);
-        webTelemetryStreamer.setChannels(new ArrayList<String>(Arrays.asList("shooterR_speed", "shooterR_current", "shooterL_speed", "shooterL_current", "intake_speed", "intake_current", "feeder_speed", "feeder_current", "SPshooter_speed", "SPfeeder_speed", "SPintake_speed", "battery_voltage")));
+        webTelemetryStreamer.setChannels(new ArrayList<String>(Arrays.asList("shooterR_speed", "shooterR_current", "shooterL_speed", "shooterL_current", "intake_speed", "intake_current", "feeder_speed", "feeder_current", "SPshooter_speed", "SPfeeder_speed", "SPintake_speed", "battery_voltage", "otos0_x", "otos0_y", "otos0_h")));
         Thread webTelemetryStreamerThread = new Thread(webTelemetryStreamer);
         webTelemetryStreamerThread.start(); // start server
 
@@ -480,9 +480,9 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
 //            webTelemetryStreamer.sendData("current_feeder2", ((DcMotorEx) shooterR).getCurrent(CurrentUnit.MILLIAMPS));
 
 
-//            webTelemetryStreamer.sendData("sf_x", otosPos.x);
-//            webTelemetryStreamer.sendData("sf_y", otosPos.y);
-//            webTelemetryStreamer.sendData("sf_h", otosPos.h);
+            webTelemetryStreamer.sendData("otos0_x", otos0Pos.x);
+            webTelemetryStreamer.sendData("otos0_y", otos0Pos.y);
+            webTelemetryStreamer.sendData("otos0_h", otos0Pos.h);
 
             // get voltage sensor (there are two one is on the expansion hub and this is not ideal as it does not specify which one to use)
             for (VoltageSensor sensor : hardwareMap.voltageSensor) {
