@@ -158,6 +158,12 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
         myOtos.calibrateImu();
         myOtos.resetTracking();
 
+        myOtos.setLinearUnit(DistanceUnit.INCH);
+        myOtos.setAngularUnit(AngleUnit.DEGREES);
+
+        myOtos.setOffset(new SparkFunOTOS.Pose2D(-6, 0, 90));
+
+
         frontLeftDrive = hardwareMap.get(DcMotor.class, "front_left_drive");
         frontRightDrive = hardwareMap.get(DcMotor.class, "front_right_drive");
         backLeftDrive = hardwareMap.get(DcMotor.class, "back_left_drive");
@@ -289,13 +295,17 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
 //        angles = imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
 
 
-          otos0Pos = myOtos.getPosition();
 
-          // imu is reset so this is 0
+        otos0Pos = myOtos.getPosition();
+
+        // imu is reset so this is 0
 //        driveController.yawZero = 0.0 - angles.firstAngle;
 //        yawZero = 0.0 - angles.firstAngle;
 
 //        initAprilTag();
+
+        // i hate this
+        aToggler.currentState = true;
 
         int loopcounter = 0;
         while (opModeIsActive()) {
@@ -337,7 +347,7 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
         shooterR_spt.update();
 
 
-        driveController.setMeasuredYaw(0.0 - otos0Pos.h);
+        driveController.setMeasuredYaw(otos0Pos.h);
 
 
 //        doingOtosTest = doingOtosTest ^ gamepad1.backWasPressed();
@@ -540,7 +550,8 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
 
             driveController.driveFieldRelative(ySignal, xSignal, rotationSignal);
         } else {
-            driveController.driveFieldRelative(jsrc(gamepad1.left_stick_y), -jsrc(gamepad1.left_stick_x), -jsrc(gamepad1.right_stick_x));
+//            driveController.driveFieldRelative(jsrc(gamepad1.left_stick_y), -jsrc(gamepad1.left_stick_x), -jsrc(gamepad1.right_stick_x));
+            driveController.drive(jsrc(gamepad1.left_stick_y), -jsrc(gamepad1.left_stick_x), -jsrc(gamepad1.right_stick_x));
         }
         /*
         if (!doingOtosTest) {
@@ -578,13 +589,14 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
 //        }
 
         if (gamepad1.dpad_up) {
-            driveController.yawZero = 0.0 - otos0Pos.h;
+            driveController.yawZero = otos0Pos.h;
         }
 
 //        lastGamepadX = gamepad1.x;
 
 
-        aToggler.update(gamepad1.a);
+//        aToggler.update(gamepad1.a);
+        aToggler.update(gamepad1.back);
 //        bToggler.update(gamepad1.left_bumper);
 
 
@@ -601,8 +613,10 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
 
         double reversalSignal = 1 - (2 * boolToDoubleBecauseItWontCast(gamepad1.b));
 
+        // y apirltag thign
+
         ((DcMotorEx) intake).setVelocity(reversalSignal * boolToDoubleBecauseItWontCast(gamepad1.left_bumper) * webInterface.getParameter("intake_speed"));
-        ((DcMotorEx) feeder).setVelocity(reversalSignal * boolToDoubleBecauseItWontCast(gamepad1.right_bumper) * webInterface.getParameter("feeder_speed"));
+        ((DcMotorEx) feeder).setVelocity(reversalSignal * boolToDoubleBecauseItWontCast(gamepad1.a) * webInterface.getParameter("feeder_speed"));
 
         double shooterSpeed = boolToDoubleBecauseItWontCast(aToggler.currentState) * shooter_speed * hardcoded_ticks_per_revolution / 60.0;
         ((DcMotorEx) shooterR).setVelocity(shooterSpeed);

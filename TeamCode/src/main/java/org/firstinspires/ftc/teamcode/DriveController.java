@@ -128,9 +128,9 @@ public class DriveController {
         double r = Math.hypot(right, forward);
 
         // TODO: Continuousalize this, or use quaternion maybe, because I think wrapping around is causing the issue that only appears half the time
-        angles = this.imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+//        angles = this.imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
 
-        double yaw_corrected = ((((0.0 - angles.firstAngle) - this.yawZero) + 180.0)) % 360.0 + 180.0;
+        double yaw_corrected = ((((this.measuredYaw) - this.yawZero) + 180.0)) % 360.0 + 180.0;
 
 //        double currentError = AngleUnit.normalizeRadians(rotate - yaw_corrected * (Math.PI/180));
 //        drivingPID.setTarget(0);
