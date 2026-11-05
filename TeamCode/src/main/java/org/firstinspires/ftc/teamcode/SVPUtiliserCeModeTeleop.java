@@ -41,13 +41,9 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.vision.VisionPortal;
-import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagLibrary;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import com.qualcomm.robotcore.hardware.IMU;
@@ -63,7 +59,6 @@ import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import java.io.IOException;
 import java.util.Locale;
@@ -115,7 +110,7 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
     boolean lastGamepadX = false;
 
     Toggler aToggler = new Toggler();
-    Toggler bToggler = new Toggler();
+    Toggler yToggler = new Toggler();
 
 
     DriveController driveController;
@@ -230,6 +225,10 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
         webInterface.addParameter("Ki_aprilh", 0.000002);
         webInterface.addParameter("Kd_aprilh", 0.004);
 
+        //
+        webInterface.addParameter("turretAngleRange", 200, 2000);
+//        webInterface.addParameter("turretAngleRange", 200, 2000, 0);
+
 
 //        webInterface.addParameter("dbsizec", 0.3);
 //        webInterface.addParameter("dbdepthc", 0.3);
@@ -246,7 +245,8 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
         intake.setDirection(DcMotor.Direction.FORWARD);
         intake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        feeder.setDirection(DcMotor.Direction.REVERSE);
+//        feeder.setDirection(DcMotor.Direction.REVERSE);
+        feeder.setDirection(DcMotor.Direction.FORWARD);
         feeder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         shooterR.setDirection(DcMotor.Direction.FORWARD);
@@ -553,6 +553,16 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
 //            driveController.driveFieldRelative(jsrc(gamepad1.left_stick_y), -jsrc(gamepad1.left_stick_x), -jsrc(gamepad1.right_stick_x));
             driveController.drive(jsrc(gamepad1.left_stick_y), -jsrc(gamepad1.left_stick_x), -jsrc(gamepad1.right_stick_x));
         }
+
+        yToggler.update(gamepad1.y);
+
+        // for testing turret
+        if (yToggler.currentState) {
+            backRightDrive.setTargetPosition((int) (webInterface.getParameter("turretAngleRange") * gamepad1.right_stick_y));
+            frontLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            telemetry.addLine("turret something");
+        }
+
         /*
         if (!doingOtosTest) {
             if (!gamepad1.right_bumper && false) {
@@ -601,6 +611,8 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
 
 
 
+
+
         // double shooterPowerCoef = webInterface.getParameter("shooter_power"); // 0.80;
         // double upperWheelPower = webInterface.getParameter("feeder_power");  // 0.3
         double restPowerLevel = 1.9; // 1.9
@@ -616,7 +628,7 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
         // y apirltag thign
 
         ((DcMotorEx) intake).setVelocity(reversalSignal * boolToDoubleBecauseItWontCast(gamepad1.left_bumper) * webInterface.getParameter("intake_speed"));
-        ((DcMotorEx) feeder).setVelocity(reversalSignal * boolToDoubleBecauseItWontCast(gamepad1.a) * webInterface.getParameter("feeder_speed"));
+        ((DcMotorEx) feeder).setVelocity(-reversalSignal * boolToDoubleBecauseItWontCast(gamepad1.a) * webInterface.getParameter("feeder_speed"));
 
         double shooterSpeed = boolToDoubleBecauseItWontCast(aToggler.currentState) * shooter_speed * hardcoded_ticks_per_revolution / 60.0;
         ((DcMotorEx) shooterR).setVelocity(shooterSpeed);
