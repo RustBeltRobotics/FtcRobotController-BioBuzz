@@ -33,6 +33,9 @@ public class WebInterface implements Runnable {
 
     Map<String, Double> paramterMaxValues;
 
+    Map<String, Double> paramterMinValues;
+
+
     Mode mode; // prevent calling addParameter after listen is called, for thread safety
 
     int port = 8081;
@@ -52,6 +55,7 @@ public class WebInterface implements Runnable {
     WebInterface(int port) {
         this.parameters = new HashMap<String, Double>();
         this.paramterMaxValues = new HashMap<String, Double>();
+        this.paramterMinValues = new HashMap<String, Double>();
         this.mode = Mode.INITIALIZE;
         this.port = port;
     }
@@ -59,14 +63,19 @@ public class WebInterface implements Runnable {
 
     public void addParameter(String key, double defaultValue) {
         if (this.mode != Mode.INITIALIZE) return;
-        parameters.put(key, defaultValue);
-        paramterMaxValues.put(key, 100.0);
+        addParameter(key, defaultValue, 100.0, 0.0);
     }
 
     public void addParameter(String key, double defaultValue, double max) {
         if (this.mode != Mode.INITIALIZE) return;
+        addParameter(key, defaultValue, max, 0.0);
+    }
+
+    public void addParameter(String key, double defaultValue, double max, double min) {
+        if (this.mode != Mode.INITIALIZE) return;
         parameters.put(key, defaultValue);
         paramterMaxValues.put(key, max);
+        paramterMinValues.put(key, min);
     }
 
     // TODO: fix this because it could crash due to multithreading conflicts if this is set after the server is started
@@ -213,15 +222,16 @@ public class WebInterface implements Runnable {
             double value = entry.getValue();
             String key = entry.getKey();
             double maxValue = paramterMaxValues.get(key);
-            sliders += String.format("<label>%s:</label><input id=\"%s\" type=\"range\" min=\"0.0\" max=\"%f\" step=\"0.01\" value=\"%f\" style=\"width: 400px\"/><label id=\"%s_l\">%f</label><br/>", key, key, maxValue, value, key, value);
+            double minValue = paramterMinValues.get(key);
+            sliders += String.format("<label>%s:</label><input id=\"%s\" type=\"range\" min=\"%f\" max=\"%f\" step=\"0.01\" value=\"%f\" style=\"width: 400px\"/><label id=\"%s_l\">%f</label><br/>", key, key, minValue, maxValue, value, key, value);
             sliderArray += "\"" + key + "\",";
         }
 
         String js = sliderArray + "].forEach( key => document.getElementById(key).addEventListener('input', (ev) => {  document.getElementById(key+'_l').innerText=ev.target.value;  fetch('/setValue?'+ev.target.id+':'+ev.target.value)  }));";
 
         return "<!DOCTYPE html><html lang=\"en\"><head><title>FTC Web Interface</title></head><body>\n"
-                + sliders
-                +"<canvas id=\"canvas\" width=\"800\" height=\"450\"></canvas>"
-                +"<script>" + js + "</script></body></html>";
+               + sliders
+               +"<canvas id=\"canvas\" width=\"800\" height=\"450\"></canvas>"
+               +"<script>" + js + "</script></body></html>";
     }
 }

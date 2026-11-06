@@ -181,7 +181,7 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
         // webInterface.addParameter("shooter_power", 0.6);
         // webInterface.addParameter("feeder_power", 0.6); //0.4
 
-        webInterface.addParameter("shooter_speed", 1600, 5000);
+        webInterface.addParameter("shooter_speed", 1850, 5000);
         webInterface.addParameter("feeder_speed", 2500, 4000);
         webInterface.addParameter("intake_speed", 2500, 5000);
 
@@ -226,7 +226,7 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
         webInterface.addParameter("Kd_aprilh", 0.004);
 
         //
-        webInterface.addParameter("turretAngleRange", 200, 2000);
+        webInterface.addParameter("turretAngleRange", 20, 2000);
 //        webInterface.addParameter("turretAngleRange", 200, 2000, 0);
 
 
@@ -531,7 +531,7 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
 //            imu.resetYaw();
 //        }
 
-
+        /*
         if (gamepad1.x) {
             telemetry.addLine("otosTest");
 
@@ -552,13 +552,13 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
         } else {
 //            driveController.driveFieldRelative(jsrc(gamepad1.left_stick_y), -jsrc(gamepad1.left_stick_x), -jsrc(gamepad1.right_stick_x));
             driveController.drive(jsrc(gamepad1.left_stick_y), -jsrc(gamepad1.left_stick_x), -jsrc(gamepad1.right_stick_x));
-        }
+        }*/
 
         yToggler.update(gamepad1.y);
 
         // for testing turret
         if (yToggler.currentState) {
-            backRightDrive.setTargetPosition((int) (webInterface.getParameter("turretAngleRange") * gamepad1.right_stick_y));
+            frontLeftDrive.setTargetPosition((int) (webInterface.getParameter("turretAngleRange") * gamepad1.right_stick_y));
             frontLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             telemetry.addLine("turret something");
         }
