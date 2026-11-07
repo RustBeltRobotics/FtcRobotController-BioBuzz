@@ -173,7 +173,7 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
         shooterR_spt = new MotorSpeedTracker(shooterR, 28);
 
         webTelemetryStreamer = new WebTelemetryStreamer(8886);
-        webTelemetryStreamer.setChannels(new ArrayList<String>(Arrays.asList("shooterR_speed", "shooterR_current", "shooterL_speed", "shooterL_current", "intake_speed", "intake_current", "feeder_speed", "feeder_current", "SPshooter_speed", "SPfeeder_speed", "SPintake_speed", "battery_voltage", "otos0_x", "otos0_y", "otos0_h", "shooterL_speed_eec", "shooterR_speed_eec")));
+        webTelemetryStreamer.setChannels(new ArrayList<String>(Arrays.asList("shooterR_speed", "shooterR_current", "shooterL_speed", "shooterL_current", "intake_speed", "intake_current", "feeder_speed", "feeder_current", "SPshooter_speed", "SPfeeder_speed", "SPintake_speed", "battery_voltage", "otos0_x", "otos0_y", "otos0_h", "shooterL_speed_eec", "shooterR_speed_eec", "speed_backleft", "speed_backright", "speed_frontleft", "speed_frontright")));
         Thread webTelemetryStreamerThread = new Thread(webTelemetryStreamer);
         webTelemetryStreamerThread.start(); // start server
 
@@ -212,18 +212,26 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
         // ---
 
         // adjust these
-        webInterface.addParameter("Kp_otos", 0.08);
-        webInterface.addParameter("Ki_otos", 0.00003);
-        webInterface.addParameter("Kd_otos", 0.35);
+        webInterface.addParameter("Kp_otos", 0.08, 1);
+        webInterface.addParameter("Ki_otos", 0.00003, 1);
+        webInterface.addParameter("Kd_otos", 0.125, 1);
 
-        webInterface.addParameter("Kp_otosh", 0.004);
-        webInterface.addParameter("Ki_otosh", 0.00001);
-        webInterface.addParameter("Kd_otosh", 0.0001);
+        webInterface.addParameter("Kp_otosh", 0.01, 1);
+        webInterface.addParameter("Ki_otosh", 0.00001, 1);
+        webInterface.addParameter("Kd_otosh", 0.009, 1);
+
+//        webInterface.addParameter("Kp_otos", 0.01, 1);
+//        webInterface.addParameter("Ki_otos", 0.0, 1);
+//        webInterface.addParameter("Kd_otos", 0.0, 1);
+//
+//        webInterface.addParameter("Kp_otosh", 0.001, 1);
+//        webInterface.addParameter("Ki_otosh", 0.0, 1);
+//        webInterface.addParameter("Kd_otosh", 0.0, 1);
 
 
-        webInterface.addParameter("Kp_aprilh", 0.0007);
-        webInterface.addParameter("Ki_aprilh", 0.000002);
-        webInterface.addParameter("Kd_aprilh", 0.004);
+        webInterface.addParameter("Kp_aprilh", 0.0007, 1);
+        webInterface.addParameter("Ki_aprilh", 0.000002, 1);
+        webInterface.addParameter("Kd_aprilh", 0.004, 1);
 
         //
         webInterface.addParameter("turretAngleRange", 20, 2000);
@@ -466,6 +474,12 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
             webTelemetryStreamer.sendData("shooterL_speed_eec", shooterL_spt.rpm());
             webTelemetryStreamer.sendData("shooterR_speed_eec", shooterR_spt.rpm());
 
+            webTelemetryStreamer.sendData("speed_backleft", horrible_coefficient * ((DcMotorEx) backLeftDrive).getVelocity(AngleUnit.DEGREES) / 6.0);
+            webTelemetryStreamer.sendData("speed_backright", horrible_coefficient * ((DcMotorEx) backRightDrive).getVelocity(AngleUnit.DEGREES) / 6.0);
+            webTelemetryStreamer.sendData("speed_frontleft", horrible_coefficient * ((DcMotorEx) frontLeftDrive).getVelocity(AngleUnit.DEGREES) / 6.0);
+            webTelemetryStreamer.sendData("speed_frontright", horrible_coefficient * ((DcMotorEx) frontRightDrive).getVelocity(AngleUnit.DEGREES) / 6.0);
+
+
 
 
 
@@ -531,7 +545,6 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
 //            imu.resetYaw();
 //        }
 
-        /*
         if (gamepad1.x) {
             telemetry.addLine("otosTest");
 
@@ -544,24 +557,24 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
             double ySignal = otosYController.loop(otos0Pos.y);
             double rotationSignal = otosRotationController.loop(otos0Pos.h);
 
-            webTelemetryStreamer.sendData("xSignal", xSignal);
-            webTelemetryStreamer.sendData("ySignal", ySignal);
-            webTelemetryStreamer.sendData("rotationSignal", rotationSignal);
+//            webTelemetryStreamer.sendData("xSignal", xSignal);
+//            webTelemetryStreamer.sendData("ySignal", ySignal);
+//            webTelemetryStreamer.sendData("rotationSignal", rotationSignal);
 
-            driveController.driveFieldRelative(ySignal, xSignal, rotationSignal);
+            driveController.driveFieldRelative(-ySignal, -xSignal, rotationSignal);
         } else {
-//            driveController.driveFieldRelative(jsrc(gamepad1.left_stick_y), -jsrc(gamepad1.left_stick_x), -jsrc(gamepad1.right_stick_x));
-            driveController.drive(jsrc(gamepad1.left_stick_y), -jsrc(gamepad1.left_stick_x), -jsrc(gamepad1.right_stick_x));
-        }*/
+            driveController.driveFieldRelative(jsrc(gamepad1.left_stick_y), -jsrc(gamepad1.left_stick_x), -jsrc(gamepad1.right_stick_x));
+//            driveController.drive(jsrc(gamepad1.left_stick_y), -jsrc(gamepad1.left_stick_x), -jsrc(gamepad1.right_stick_x));
+        }
 
         yToggler.update(gamepad1.y);
 
         // for testing turret
-        if (yToggler.currentState) {
-            frontLeftDrive.setTargetPosition((int) (webInterface.getParameter("turretAngleRange") * gamepad1.right_stick_y));
-            frontLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            telemetry.addLine("turret something");
-        }
+//        if (yToggler.currentState) {
+//            frontLeftDrive.setTargetPosition((int) (webInterface.getParameter("turretAngleRange") * gamepad1.right_stick_y));
+//            frontLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//            telemetry.addLine("turret something");
+//        }
 
         /*
         if (!doingOtosTest) {

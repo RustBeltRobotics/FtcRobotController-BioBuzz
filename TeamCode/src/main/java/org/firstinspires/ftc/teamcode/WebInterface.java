@@ -223,7 +223,7 @@ public class WebInterface implements Runnable {
             String key = entry.getKey();
             double maxValue = paramterMaxValues.get(key);
             double minValue = paramterMinValues.get(key);
-            sliders += String.format("<label>%s:</label><input id=\"%s\" type=\"range\" min=\"%f\" max=\"%f\" step=\"0.01\" value=\"%f\" style=\"width: 400px\"/><label id=\"%s_l\">%f</label><br/>", key, key, minValue, maxValue, value, key, value);
+            sliders += String.format("<label>%s:</label><input id=\"%s\" type=\"range\" min=\"%f\" max=\"%f\" step=\"0.001\" value=\"%f\" style=\"width: 400px\"/><label id=\"%s_l\">%f</label><br/>", key, key, minValue, maxValue, value, key, value);
             sliderArray += "\"" + key + "\",";
         }
 

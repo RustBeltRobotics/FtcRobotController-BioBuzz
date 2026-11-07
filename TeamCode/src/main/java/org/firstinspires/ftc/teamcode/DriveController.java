@@ -43,10 +43,10 @@ public class DriveController {
     void init() {
         // We set the left motors in reverse which is needed for drive trains where the left
         // motors are opposite to the right ones.
-        backLeftDrive.setDirection(DcMotor.Direction.FORWARD);
+        backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
         frontLeftDrive.setDirection(DcMotor.Direction.FORWARD);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
-        frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
+        frontRightDrive.setDirection(DcMotor.Direction.REVERSE);
 
         // This uses RUN_USING_ENCODER to be more accurate.   If you don't have the encoder
         // wires, you should remove these
@@ -94,7 +94,7 @@ public class DriveController {
     }
 
     public void setMeasuredYaw(double yaw) {
-        this.measuredYaw = 0.0 - yaw;
+        this.measuredYaw = yaw;
     }
 
     public void driveFieldRelativeAuto(double forward, double right, double rotate) {

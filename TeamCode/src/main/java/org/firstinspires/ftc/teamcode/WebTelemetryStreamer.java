@@ -86,7 +86,16 @@ public class WebTelemetryStreamer implements Runnable {
 
         while (true) {
             try {
-                waitForClient();
+//                while (true) {
+//                    try {
+                        waitForClient();
+//                        Thread.sleep(50);
+//                    } catch (IOException e) {
+//
+//                    } finally {
+//                        break;
+//                    }
+//                }
                 messageQueue.clear();
 
                 boolean exitloop = false;
