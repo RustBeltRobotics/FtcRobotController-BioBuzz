@@ -44,9 +44,13 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.vision.VisionPortal;
-import org.firstinspires.ftc.vision.apriltag.AprilTagLibrary;
+import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagSingleDetection;
 import com.qualcomm.robotcore.hardware.IMU;
+
+import com.qualcomm.robotcore.hardware.Servo;
 
 
 import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
@@ -57,11 +61,15 @@ import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 //import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
 
 
+
 import java.util.ArrayList;
 import java.util.Arrays;
 
 import java.io.IOException;
 import java.util.Locale;
+
+import java.util.List;
+
 
 /*
  * This OpMode illustrates how to program your robot to drive field relative.  This means
@@ -137,6 +145,8 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
 
     boolean doingOtosTest = false;
 
+    Servo turret0;
+
     @Override
     public void runOpMode() {
 //        Rev9AxisImu.Parameters parameters = new Rev9AxisImu.Parameters(new Rev9AxisImuOrientationOnRobot(Rev9AxisImuOrientationOnRobot.LogoFacingDirection.UP, Rev9AxisImuOrientationOnRobot.I2cPortFacingDirection.BACKWARD));
@@ -168,6 +178,8 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
         shooterR = hardwareMap.get(DcMotor.class, "shooterR");
         intake = hardwareMap.get(DcMotor.class, "intake");
         feeder = hardwareMap.get(DcMotor.class, "feeder");
+
+        turret0 = hardwareMap.get(Servo.class, "turret0");
 
         shooterL_spt = new MotorSpeedTracker(shooterL, 28);
         shooterR_spt = new MotorSpeedTracker(shooterR, 28);
@@ -234,7 +246,7 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
         webInterface.addParameter("Kd_aprilh", 0.004, 1);
 
         //
-        webInterface.addParameter("turretAngleRange", 20, 2000);
+        webInterface.addParameter("turretAngleRange", 0.49, 1);
 //        webInterface.addParameter("turretAngleRange", 200, 2000, 0);
 
 
@@ -310,7 +322,7 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
 //        driveController.yawZero = 0.0 - angles.firstAngle;
 //        yawZero = 0.0 - angles.firstAngle;
 
-//        initAprilTag();
+        initAprilTag();
 
         // i hate this
         aToggler.currentState = true;
@@ -427,9 +439,45 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
 //        }
 
 
-//        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
-//        telemetry.addData("# AprilTags Detected", currentDetections.size());
-//        telemetry.addData("FPS: ", visionPortal.getFps());
+        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+        telemetry.addData("# AprilTags Detected", currentDetections.size());
+        telemetry.addData("FPS: ", visionPortal.getFps());
+
+
+
+//        if (gamepad1.right_bumper) {
+//            telemetry.addLine("apriltag");
+//
+//            AprilTagSingleDetection detection = currentDetections.stream()
+//                    .filter(d -> d instanceof AprilTagSingleDetection)
+//                    .map(d -> (AprilTagSingleDetection) d)
+//                    .filter(d -> d.id == 30) // id 32
+//                    .findFirst()
+//                    .orElse(null);
+//
+//            if (detection != null) {
+//                    apriltagRotationController.setTarget(300); // 300 pixels
+//
+//                    double rotationSignal = apriltagRotationController.loop(detection.center.y);
+//                    double npos = turret0.getPosition() + rotationSignal;
+//
+//                    double mx = webInterface.getParameter("turretAngleRange") * 0.5;
+//                    if (npos > mx) {
+//                        npos = mx;
+//                    }
+//                    if (npos < -mx) {
+//                        npos = -mx;
+//                    }
+//
+//                    turret0.setPosition(npos);
+//            }
+//        } else {
+        if (true) {
+            // turret
+            double a = (double) (webInterface.getParameter("turretAngleRange") * gamepad1.right_stick_y);
+            turret0.setPosition((a + 1) / 2);
+        }
+
 
 //        for (AprilTagDetection detection : currentDetections) {
 //            if (detection.metadata != null && detection.ftcPose != null) {
@@ -444,7 +492,8 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
 //        }
 
         // send slower to stop network getting backed up (maybe it would help if I don't flush data inside of sendData - oh wait I'm already doing that)
-        if (true) { //(loopcounter % 3 == 0) {
+        if (true) {
+//        if (loopcounter % 2 == 0) {
 //            if (currentDetections.size() > 0) {
 //                AprilTagDetection detection = currentDetections.get(0);
 //                webTelemetryStreamer.sendData("xa", detection.ftcPose.x);
@@ -568,6 +617,7 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
         }
 
         yToggler.update(gamepad1.y);
+
 
         // for testing turret
 //        if (yToggler.currentState) {
@@ -700,15 +750,22 @@ public class SVPUtiliserCeModeTeleop extends LinearOpMode {
     }
 
     private void initAprilTag() {
-        AprilTagLibrary.Builder myLibraryBuilder = new AprilTagLibrary.Builder();
-        myLibraryBuilder.addTag(21, "21", 6.5, DistanceUnit.INCH);
-        myLibraryBuilder.addTag(24, "24", 6.5, DistanceUnit.INCH);
-        myLibraryBuilder.addTag(11, "11", 6.5, DistanceUnit.INCH);
-        myLibraryBuilder.addTag(19, "21", 6.5, DistanceUnit.INCH);
-        myLibraryBuilder.addTag(20, "24", 6.5, DistanceUnit.INCH);
+//        AprilTagLibrary.Builder myLibraryBuilder = new AprilTagLibrary.Builder();
+//        myLibraryBuilder.addTag(21, "21", 6.5, DistanceUnit.INCH);
+//        myLibraryBuilder.addTag(24, "24", 6.5, DistanceUnit.INCH);
+//        myLibraryBuilder.addTag(11, "11", 6.5, DistanceUnit.INCH);
+//        myLibraryBuilder.addTag(19, "21", 6.5, DistanceUnit.INCH);
+//        myLibraryBuilder.addTag(20, "24", 6.5, DistanceUnit.INCH);
+//
+//        AprilTagLibrary myCustomLibrary = myLibraryBuilder.build();
+//        aprilTag = new AprilTagProcessor.Builder().setTagLibrary(myCustomLibrary).build();
 
-        AprilTagLibrary myCustomLibrary = myLibraryBuilder.build();
-        aprilTag = new AprilTagProcessor.Builder().setTagLibrary(myCustomLibrary).build();
+        AprilTagProcessor aprilTag = new AprilTagProcessor.Builder()
+                .setTagLibrary(
+                        AprilTagGameDatabase.getBioBuzzTagLibrary()
+                )
+                .build();
+
 
         VisionPortal.Builder builder = new VisionPortal.Builder();
         if (USE_WEBCAM) {
